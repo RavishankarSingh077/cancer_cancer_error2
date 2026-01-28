@@ -6,3 +6,4 @@ scikit-learn
 ta
 flask
 flask-cors
+gunicorn
