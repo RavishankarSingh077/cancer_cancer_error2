@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MON100 Prediction - Elite Elite</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --text-color: #c9d1d9;
+            --accent-color: #58a6ff;
+            --buy-color: #3fb950;
+            --sell-color: #f85149;
+            --neutral-color: #8b949e;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            border: 1px solid #30363d;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--accent-color);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 2rem;
+        }
+
+        input {
+            flex: 1;
+            padding: 0.8rem;
+            border-radius: 6px;
+            border: 1px solid #30363d;
+            background: #0d1117;
+            color: white;
+            font-size: 1rem;
+        }
+
+        button {
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            border: none;
+            background-color: var(--accent-color);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .result-card {
+            display: none;
+            padding: 1.5rem;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid #30363d;
+            margin-top: 2rem;
+            text-align: left;
+        }
+
+        .decision-header {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-align: center;
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+
+        .buy {
+            background-color: rgba(63, 185, 80, 0.15);
+            color: var(--buy-color);
+        }
+
+        .sell {
+            background-color: rgba(248, 81, 73, 0.15);
+            color: var(--sell-color);
+        }
+
+        .neutral {
+            background-color: rgba(139, 148, 158, 0.15);
+            color: var(--neutral-color);
+        }
+
+        .prob-bar {
+            height: 10px;
+            background: #30363d;
+            border-radius: 5px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .prob-fill {
+            height: 100%;
+            transition: width 0.5s ease-out;
+        }
+
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .footer {
+            margin-top: 2rem;
+            font-size: 0.75rem;
+            color: var(--neutral-color);
+            line-height: 1.4;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>MON100 NASDAQ Analysis</h1>
+
+        <div class="input-group">
+            <input type="text" id="symbol" placeholder="Symbol (e.g. RELIANCE.NS, TCS.BO)" value="MON100.NS">
+            <button onclick="getPrediction()">Analyze</button>
+        </div>
+
+        <div style="margin-bottom: 2rem; display: flex; justify-content: center; gap: 20px;">
+            <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                <input type="radio" name="model_type" value="intraday" checked> Quick (15m)
+            </label>
+            <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                <input type="radio" name="model_type" value="daily"> Swing (Day)
+            </label>
+        </div>
+
+        <div
+            style="font-size: 0.8rem; color: var(--neutral-color); margin-top: -1.5rem; margin-bottom: 1rem; text-align: left;">
+            Tip: For NSE use <b>.NS</b> (RELIANCE.NS), for BSE use <b>.BO</b> (TCS.BO)
+        </div>
+
+        <div id="loading" style="display: none;">Analyzing MON100 Patterns...</div>
+
+        <div id="result" class="result-card">
+            <div id="decision" class="decision-header"></div>
+
+            <div style="margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <strong>Symbol:</strong> <span id="res-symbol"></span><br>
+                    <strong>Price:</strong> <span id="res-currency"></span><span id="res-price"></span>
+                </div>
+                <div style="text-align: right;">
+                    <span style="color: var(--buy-color);"><strong>Target:</strong> <span
+                            id="res-target"></span></span><br>
+                    <span style="color: var(--sell-color);"><strong>Risk/SL:</strong> <span id="res-risk"></span></span>
+                </div>
+            </div>
+            <div id="move-hint"
+                style="font-size: 0.8rem; color: var(--neutral-color); margin-bottom: 15px; text-align: center; border-bottom: 1px solid #30363d; padding-bottom: 10px;">
+                Expected move: <span id="res-pct"></span>% in <span id="res-time-hint"></span>
+            </div>
+
+            <div class="prob-container">
+                <div>UP Probability: <span id="up-val"></span>%</div>
+                <div class="prob-bar">
+                    <div id="up-fill" class="prob-fill" style="background: var(--buy-color);"></div>
+                </div>
+
+                <div>DOWN Probability: <span id="down-val"></span>%</div>
+                <div class="prob-bar">
+                    <div id="down-fill" class="prob-fill" style="background: var(--sell-color);"></div>
+                </div>
+
+                <div>NO TRADE Probability: <span id="no-val"></span>%</div>
+                <div class="prob-bar">
+                    <div id="no-fill" class="prob-fill" style="background: var(--neutral-color);"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            ⚠️ Disclaimer: Probability-based experimental research model. Not financial advice. Always use manual
+            stop-loss.
+        </div>
+    </div>
+
+    <script>
+        async function getPrediction() {
+            const symbol = document.getElementById('symbol').value;
+            const modelType = document.querySelector('input[name="model_type"]:checked').value;
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+
+            loading.style.display = 'block';
+            result.style.display = 'none';
+
+            try {
+                const formData = new FormData();
+                formData.append('symbol', symbol);
+                formData.append('model_type', modelType);
+
+                const response = await fetch('http://127.0.0.1:5000/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                } else {
+                    document.getElementById('res-symbol').innerText = data.symbol;
+                    document.getElementById('res-price').innerText = data.last_price.toFixed(2);
+                    document.getElementById('res-currency').innerText = data.currency;
+                    document.getElementById('res-target').innerText = data.currency + data.target_price.toFixed(2);
+                    document.getElementById('res-risk').innerText = data.currency + data.risk_price.toFixed(2);
+                    document.getElementById('res-pct').innerText = data.expected_move;
+                    document.getElementById('res-time-hint').innerText = data.time_hint;
+
+                    document.getElementById('decision').innerText = data.decision;
+                    document.getElementById('decision').className = 'decision-header ' + data.signal_class;
+
+                    document.getElementById('up-val').innerText = data.up_prob;
+                    document.getElementById('up-fill').style.width = data.up_prob + '%';
+
+                    document.getElementById('down-val').innerText = data.down_prob;
+                    document.getElementById('down-fill').style.width = data.down_prob + '%';
+
+                    document.getElementById('no-val').innerText = data.no_trade_prob;
+                    document.getElementById('no-fill').style.width = data.no_trade_prob + '%';
+
+                    result.style.display = 'block';
+                }
+            } catch (e) {
+                alert('Connection Error');
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+
+</html>
